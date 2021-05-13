@@ -178,8 +178,90 @@ SELECT first_name, salary
 FROM employees
 WHERE first_name LIKE '__a_';
 
+-- ORDER BY : 정렬
+--   ASC (오름차순, 기본)
+--   DESC (내림차순, 큰 것 -> 작은 것 순)
 
+-- 부서번호 오름차순 정렬 -> 부서번호, 급여, 이름
+SELECT department_id, salary, first_name
+FROM employees
+ORDER BY department_id; --  ASC는 생략 가능
 
+-- 급여가 10000이상인 직원의 이름, 급여를 급여 내림차순으로
+SELECT first_name, salary
+FROM employees
+WHERE salary >= 10000
+ORDER BY salary DESC;
 
+-- 부서번호, 급여, 이름 SELECT, 
+-- 부서번호 오름차순, 급여 내림차순
+SELECT department_id, salary, first_name
+FROM employees
+ORDER BY department_id, salary DESC;
 
+--------------------
+-- 단일행 함수 : 레코드를 입력으로 받음
+--------------------
 
+-- 문자열 단일행 함수
+SELECT first_name, last_name,
+    CONCAT(first_name, CONCAT(' ', last_name)), -- 결합
+    INITCAP(first_name || ' ' || last_name), --  첫 글자를 대문자로
+    LOWER(first_name), -- 모두 소문자
+    UPPER(first_name), -- 모두 대문자
+    LPAD(first_name, 20, '*'),  -- 20자리 확보, 왼쪽을 *로 채움
+    RPAD(first_name, 20, '*')  -- 20자리 확보, 오른쪽을 *로 채움
+FROM employees;
+
+SELECT '      Oracle      ',
+    '**********Database**********'
+FROM dual;
+
+SELECT LTRIM('      Oracle      '),     -- 왼쪽의 공백 제거
+    RTRIM('      Oracle      '),    -- 오른쪽 공백 제거
+    TRIM('*' FROM '**********Database**********'), -- 양쪽의 지정된 문자 제거
+    SUBSTR('Oracle Database', 8, 4),    --  8번째 글자부터 4글자
+    SUBSTR('Oracle Database', -8, 4)   --  뒤에서 8번째 글자부터 4글자
+FROM dual;
+
+-- 수치형 단일행 함수
+SELECT ABS(-3.14),  -- 절대값
+    CEIL(3.14), --  소숫점 올림 (천정)
+    FLOOR(3.14), -- 소숫점 버림 (바닥)
+    MOD(7, 3),  --  나머지 
+    POWER(2, 4),    --  제곱 
+    ROUND(3.5),     --  반올림
+    ROUND(3.4567, 2),   --  소숫점 2째자리까지 반올림으로 변환(소숫점 3째 자리에서 반올림)
+    TRUNC(3.5),     -- 소숫점 아래 버림
+    TRUNC(3.4567, 2)   --  소숫점 2째자리까지 버림으로 표시
+FROM dual;
+
+--------------------
+-- DATE Format
+--------------------
+
+-- 날짜 형식 확인
+SELECT * FROM nls_session_parameters
+WHERE parameter = 'NLS_DATE_FORMAT';
+
+-- 현재 날짜와 시간
+SELECT sysdate 
+FROM dual;  -- dual 가상 테이블로부터 확인 -> 단일행
+
+SELECT sysdate
+FROM employees; -- 테이블로부터 받아오므로 테이블 내 행 갯수만큼을 반환
+
+-- DATE 관련 함수
+SELECT sysdate, --  현재 날짜와 시간
+    ADD_MONTHS(sysdate, 2), --  2개월 후의 날짜
+    MONTHS_BETWEEN('99/12/31', sysdate),    --  1999년 12월 31일 ~ 현재의 달수
+    NEXT_DAY(sysdate, 7),   --  현재 날짜 이후의 첫 번째 7요일
+    ROUND(TO_DATE('2021-05-17', 'YYYY-MM-DD'), 'MONTH'),    --  MONTH 정보로 반올림
+    TRUNC(TO_DATE('2021-05-17', 'YYYY-MM-DD'), 'MONTH')
+FROM dual;
+
+--  현재 날짜 기준, 입사한지 몇 개월 지났는가?
+SELECT first_name, 
+    hire_date, 
+    ROUND(MONTHS_BETWEEN(sysdate, hire_date))
+FROM employees;
