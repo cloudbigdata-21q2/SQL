@@ -472,3 +472,27 @@ SELECT first_name, salary,
     DENSE_RANK() OVER (ORDER BY salary DESC) as "DENSE RANK",  --  중복 순위 관계 없이 바로 다음 순위 부여
     ROW_NUMBER() OVER (ORDER BY salary DESC) as "ROW NUMBER" -- RANK가 출력된 레코드 순서
 FROM employees;
+
+----------
+-- 계층형 쿼리
+----------
+-- Oracle
+-- 질의 결과를 Tree 형태의 구조로 출력
+-- 현재 employeees 테이블을 이용, 조직도를 뽑아봅시다.
+SELECT employee_id, first_name, manager_id
+FROM employees;
+
+SELECT level, employee_id, first_name, manager_id
+FROM employees
+START WITH manager_id IS NULL   --  ROOT 노드의 조건
+CONNECT BY PRIOR employee_id = manager_id
+ORDER BY level;
+
+-- JOIN을 이용해서 manager 이름까지 확인
+SELECT level, emp.employee_id, emp.first_name || ' ' || emp.last_name,
+    emp.manager_id, man.employee_id, man.first_name || ' ' || man.last_name
+FROM employees emp LEFT OUTER JOIN employees man
+                        ON emp.manager_id = man.employee_id
+START WITH emp.manager_id IS NULL
+CONNECT BY PRIOR emp.employee_id = emp.manager_id
+ORDER BY level;
