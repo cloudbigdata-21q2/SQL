@@ -371,3 +371,104 @@ FROM employees
 WHERE salary > ANY ( SELECT salary FROM employees
                     WHERE department_id = 110 );
 -- > ANY(12008, 8300) -> salary > 12008 OR salary > 8300
+
+-- Correlated Query 
+-- 바깥쪽 쿼리(주쿼리)와 안쪽 쿼리(서브 쿼리)가 서로 연관된 쿼리
+SELECT first_name, salary, department_id
+FROM employees outer 
+WHERE salary  > ( SELECT AVG(salary) FROM employees
+                    WHERE department_id = outer.department_id );
+-- 의미
+-- 사원 목록을 뽑아 오는데
+-- 자신이 속한 부서의 평균 급여보다 많이 받는 직원을 뽑아오자
+
+-- 서브 쿼리 연습문제
+-- 각 부서별로 최고 급여를 받는 사원의 목록 출력 (조건절 이용)
+-- 쿼리 1번: 각 부서의 최고 급여 테이블을 뽑아 봅시다
+SELECT department_id, MAX(salary)
+FROM employees
+GROUP BY department_id;
+
+-- 쿼리 2번: 위 쿼리에서 나온 department_id, salary max 값을 비교
+SELECT department_id, employee_id, first_name, salary
+FROM employees
+WHERE (department_id, salary) IN 
+    (SELECT department_id, MAX(salary)
+        FROM employees
+        GROUP BY department_id)
+ORDER BY department_id;
+
+-- 각 부서별로 최고 급여를 받는 사원의 목록 출력 (테이블 조인)
+SELECT emp.department_id, 
+    emp.employee_id, 
+    first_name,
+    emp.salary
+FROM employees emp, ( SELECT department_id, MAX(salary) salary
+                        FROM employees
+                        GROUP BY department_id ) sal
+WHERE emp.department_id = sal.department_id AND
+    emp.salary = sal.salary
+ORDER BY emp.department_id;
+
+----------
+-- TOP-K Query
+----------
+-- rownum : 쿼리 질의 수행결과에 의한 가상의 컬럼 -> 쿼리 결과의 순서 반환
+
+-- 2007년 입사자 중, 연봉 순위 5위까지 추출
+SELECT rownum, first_name, salary
+FROM (SELECT * FROM employees
+        WHERE hire_date LIKE '07%'
+        ORDER BY salary DESC)
+WHERE rownum <= 5;
+
+---------
+-- 집합 연산
+---------
+
+SELECT first_name, salary, hire_date
+FROM employees
+WHERE hire_date < '05/01/01'; -- 2005년 1월 1일 이전 입사자 (24)
+SELECT first_name, salary, hire_date
+FROM employees
+WHERE salary > 12000; -- 12000 초과한 급여 받는 사원 (8)
+
+-- 입사일이 '05/01/01'이전이고 급여 > 12000 -> 교집합
+SELECT first_name, salary, hire_date
+FROM employees
+WHERE hire_date < '05/01/01'  -- 2005년 1월 1일 이전 입사자 (24)
+INTERSECT   --  교집합 연산
+SELECT first_name, salary, hire_date
+FROM employees
+WHERE salary > 12000; -- 12000 초과한 급여 받는 사원 (8)
+
+-- 입사일이 '05/01/01'이전 이거나 (OR) 급여 > 12000 -> 합집합
+SELECT first_name, salary, hire_date
+FROM employees
+WHERE hire_date < '05/01/01'  -- 2005년 1월 1일 이전 입사자 (24)
+-- UNION   --  합집합 연산 (중복은 제거)
+UNION ALL   -- 합집합 연산 (중복은 제거 안함)
+SELECT first_name, salary, hire_date
+FROM employees
+WHERE salary > 12000 -- 12000 초과한 급여 받는 사원 (8)
+ORDER BY first_name;
+
+-- 입사일 '05/01/01'이전인 사원 중
+-- 급여 > 12000 사원은 제거 -> 차집합
+SELECT first_name, salary, hire_date
+FROM employees
+WHERE hire_date < '05/01/01'  -- 2005년 1월 1일 이전 입사자 (24)
+MINUS -- 차집합
+SELECT first_name, salary, hire_date
+FROM employees
+WHERE salary > 12000 -- 12000 초과한 급여 받는 사원 (8)
+ORDER BY salary DESC;
+
+----------
+-- Rank 관련
+----------
+SELECT first_name, salary,
+    RANK() OVER (ORDER BY salary DESC) as RANK, --  중복 순위는 건너 뛰고 출력
+    DENSE_RANK() OVER (ORDER BY salary DESC) as "DENSE RANK",  --  중복 순위 관계 없이 바로 다음 순위 부여
+    ROW_NUMBER() OVER (ORDER BY salary DESC) as "ROW NUMBER" -- RANK가 출력된 레코드 순서
+FROM employees;
