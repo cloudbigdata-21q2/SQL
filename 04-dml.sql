@@ -46,3 +46,60 @@ INSERT INTO book (book_id, title, author_id)
 VALUES(3, '쇼생크 탈출', 3);
 
 SELECT * FROM book;
+
+COMMIT;
+
+-- UPDATE 테이블명 Set 컬럼명=값, 컬럼명=값
+UPDATE author SET author_desc='알쓸신잡 출연';
+SELECT * FROM author;
+
+-- WHERE 절을 명시하지 않으면 모든 레코드가 변경
+ROLLBACK;
+UPDATE author SET author_desc='알쓸신잡 출연'
+WHERE author_id=2;
+
+SELECT * FROM author;
+
+-- 연습
+-- hr.employees 테이블로부터 department_id가 10, 20, 30인 사람들만 
+-- 새 테이블로 생성
+CREATE TABLE emp123 AS
+    ( SELECT * FROM hr.employees
+        WHERE department_id IN (10, 20, 30));
+DESC emp123;
+SELECT first_name, salary, department_id FROM emp123;
+
+-- 부서가 30인 직원들의 급여를 10% 인상해 줍시다.
+UPDATE emp123
+SET salary = salary + salary * 0.1
+WHERE department_id=30;
+SELECT first_name, salary, department_id, job_id FROM emp123;
+
+ROLLBACK;
+
+-- DELETE : 테이블로부터 레코드 삭제
+SELECT * FROM emp123;
+DELETE FROM emp123;
+--  WHERE 절 없이 DELETE 수행하면 모든 레코드 삭제
+ROLLBACK;
+
+SELECT * FROM emp123;
+
+-- emp123으로부터 job_id가 PU_로 시작되는 레코드 삭제
+DELETE FROM emp123
+WHERE job_id LIKE 'PU_%';
+
+SELECT * FROM emp123;
+ROLLBACK;
+
+-- DELETE vs TRUNCATE
+-- DELETE : Transaction의 대상 -> ROLLBACK;
+-- TRUNCATE : Transaction의 대상이 아님 -> ROLLBACK 불가
+DELETE FROM emp123;
+SELECT * FROM emp123;
+ROLLBACK;
+
+TRUNCATE TABLE emp123;
+SELECT * FROM emp123;
+ROLLBACK;   --  TRUNCATE는 롤백의 대상이 아니다
+SELECT * FROM emp123;
